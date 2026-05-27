@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sokoban Adventure</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #0d2e5c;
+    --secondary-color: #1a3a7a;
+    --accent-color: #0b2f92;
+    --text-light: #eaeef8;
+    --text-dim: #7280a0;
+    --bg-dark: #03040b;
+    --success-green: #0f9e44;
+    --danger-red: #b03030;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(180deg, #050810 0%, #020406 100%);
+    color: var(--text-light);
+    overflow: hidden;
+    height: 100vh;
+}
+
+.app-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* Screen Management */
+.screen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    top: 0;
+    left: 0;
+}
+
+.screen.active {
+    display: flex;
+    opacity: 1;
+    z-index: 10;
+}
+
+/* Auth Card */
+.auth-screen,
+.register-screen {
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, #050810 0%, #020406 100%);
+}
+
+.auth-card {
+    background: rgba(17, 22, 30, 0.8);
+    border: 1px solid rgba(69, 141, 184, 0.2);
+    border-radius: 20px;
+    padding: 40px;
+    width: 350px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.auth-card h1 {
+    font-size: 28px;
+    margin-bottom: 30px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.text-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    background-color: rgba(15, 20, 28, 0.8);
+    color: var(--text-light);
+    border: 1px solid rgba(69, 141, 184, 0.3);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.text-input:focus {
+    border-color: rgba(90, 175, 242, 0.6);
+}
+
+.text-input::placeholder {
+    color: var(--text-dim);
+}
+
+.error-msg {
+    color: #ff5a5a;
+    font-size: 12px;
+    margin-bottom: 15px;
+    min-height: 20px;
+}
+
+.pixel-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.pixel-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.pixel-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.pixel-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(180deg, #2e7ac9 0%, #1e5ba8 100%);
+    margin-bottom: 15px;
+    font-size: 15px;
+}
+
+.signup-link-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    color: #5aafef;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color 0.2s;
+    padding: 10px;
+}
+
+.signup-link-btn:hover {
+    color: #7acdff;
+}
+
+/* Intro Screen */
+.intro-screen {
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.intro-content {
+    text-align: center;
+    z-index: 2;
+}
+
+.intro-title {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.intro-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 300px;
+    margin: 0 auto;
+    max-width: 90vw;
+}
+
+.start-btn {
+    background: linear-gradient(180deg, #0f9e44 0%, #0a7a35 100%);
+}
+
+.instructions-btn {
+    background: linear-gradient(180deg, #2e7ac9 0%, #1e5ba8 100%);
+}
+
+/* Level Select Screen */
+.level-select-screen,
+.category-levels-screen,
+.game-screen {
+    flex-direction: column;
+}
+
+.level-select-content,
+.category-levels-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.level-select-content h1,
+.category-levels-content h1 {
+    font-size: 32px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.category-grid,
+.level-grid,
+.theme-grid {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.category-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.level-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+}
+
+.theme-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-height: 60vh;
+}
+
+.level-tile {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: rgba(22, 27, 36, 0.8);
+    border: 1px solid rgba(69, 141, 184, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.level-tile:hover:not(:disabled) {
+    background: rgba(32, 42, 56, 0.9);
+    border-color: rgba(90, 175, 242, 0.5);
+    transform: translateY(-3px);
+}
+
+.level-tile:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--text-dim);
+}
+
+.level-tile .stars {
+    display: flex;
+    gap: 4px;
+}
+
+.star {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.star.filled {
+    color: #ffc612;
+}
+
+.star.empty {
+    color: #7280a0;
+}
+
+.back-btn {
+    background: linear-gradient(180deg, #8c2e38 0%, #6a1f24 100%);
+    margin-top: auto;
+}
+
+/* Game Screen */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+    gap: 12px;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: rgba(8, 17, 28, 0.7);
+    border-radius: 15px;
+    border: 1px solid rgba(69, 141, 184, 0.15);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.level-info,
+.timer-info {
+    color: var(--text-light);
+}
+
+.game-area {
+    flex: 1;
+    background: rgba(13, 22, 35, 0.6);
+    border-radius: 18px;
+    border: 1px solid rgba(69, 141, 184, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 15px;
+}
+
+#gameCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+}
+
+.game-controls {
+    display: flex;
+    gap: 30px;
+    background: transparent;
+    padding: 20px;
+    border-radius: 18px;
+    border: none;
+    max-height: none;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.dpad-container {
+    flex: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 70px);
+    grid-template-rows: repeat(3, 70px);
+    gap: 12px;
+}
+
+.dpad-btn {
+    background: linear-gradient(180deg, #2e3d4f 0%, #1a2534 100%);
+    border: 1px solid rgba(69, 141, 184, 0.3);
+    border-radius: 10px;
+    color: var(--text-light);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dpad-btn:hover {
+    background: linear-gradient(180deg, #3e4d5f 0%, #2a3544 100%);
+    border-color: rgba(90, 175, 242, 0.5);
+}
+
+.dpad-btn:active {
+    transform: scale(0.95);
+}
+
+.center-btn {
+    grid-column: 2;
+    grid-row: 2;
+    background: linear-gradient(180deg, #8b6b2e 0%, #6a5220 100%);
+    font-size: 13px;
+}
+
+.up-btn {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.left-btn {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.right-btn {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.down-btn {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.side-buttons {
+    flex: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 140px;
+    width: 140px;
+}
+
+.side-buttons .pixel-button {
+    flex: 1;
+    margin: 0;
+    padding: 14px 10px;
+    font-size: 13px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#restartBtn {
+    background: linear-gradient(180deg, #c83030 0%, #8a1f1f 100%);
+}
+
+#levelsBtn {
+    background: linear-gradient(180deg, #2e7ac9 0%, #1e5ba8 100%);
+}
+
+#nextBtn {
+    background: linear-gradient(180deg, #2e7ac9 0%, #1e5ba8 100%);
+}
+
+#nextBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Win Message */
+.win-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 30, 50, 0.95);
+    border: 2px solid rgba(90, 175, 242, 0.4);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.win-message.hidden {
+    display: none;
+}
+
+.win-message h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.win-message .stars {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.win-message .star {
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+}
+
+/* Profile Menu */
+.profile-btn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(180deg, #3d4858 0%, #262f3d 100%);
+    border: 2px solid #c99e48;
+    border-radius: 50%;
+    color: #f0f0f0;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 50;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.profile-btn:hover {
+    background: linear-gradient(180deg, #4d5868 0%, #363f4d 100%);
+    transform: scale(1.05);
+}
+
+.profile-menu {
+    position: fixed;
+    top: 70px;
+    right: 15px;
+    background: rgba(13, 18, 22, 0.95);
+    border: 1px solid rgba(69, 141, 184, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    z-index: 60;
+    backdrop-filter: blur(10px);
+    min-width: 150px;
+}
+
+.profile-menu.hidden {
+    display: none;
+}
+
+.theme-btn {
+    background: linear-gradient(180deg, #6b4e99 0%, #4a3570 100%);
+}
+
+.logout-btn {
+    background: linear-gradient(180deg, #8c2e38 0%, #6a1f24 100%);
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: rgba(14, 19, 28, 0.95);
+    border: 1px solid rgba(69, 141, 184, 0.3);
+    border-radius: 18px;
+    padding: 30px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+}
+
+.modal-content h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: var(--text-light);
+}
+
+.instructions-text {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #d1d5e8;
+}
+
+.instructions-text p {
+    line-height: 1.6;
+}
+
+.theme-picker {
+    max-width: 400px;
+}
+
+.theme-grid .pixel-button {
+    width: 100%;
+    padding: 30px;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(69, 141, 184, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(69, 141, 184, 0.3);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(69, 141, 184, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .game-controls {
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .dpad {
+        grid-template-columns: repeat(3, 50px);
+        grid-template-rows: repeat(3, 50px);
+        gap: 8px;
+    }
+
+    .side-buttons {
+        width: 130px;
+    }
+
+    .side-buttons .pixel-button {
+        padding: 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .intro-title {
+        font-size: 36px;
+        margin-bottom: 20px;
+    }
+
+    .intro-buttons {
+        width: 90%;
+    }
+
+    .auth-card {
+        width: 90%;
+        max-width: 350px;
+        padding: 25px;
+    }
+
+    .auth-card h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    .text-input {
+        padding: 10px;
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+
+    .level-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .game-container {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .game-header {
+        padding: 10px 15px;
+        font-size: 14px;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .game-area {
+        padding: 8px;
+    }
+
+    #gameCanvas {
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    .game-controls {
+        padding: 10px;
+        gap: 10px;
+        flex-direction: column;
+    }
+
+    .dpad {
+        grid-template-columns: repeat(3, 45px);
+        grid-template-rows: repeat(3, 45px);
+        gap: 5px;
+    }
+
+    .dpad-btn {
+        font-size: 13px;
+    }
+
+    .side-buttons {
+        flex-direction: row;
+        gap: 5px;
+    }
+
+    .side-buttons .pixel-button {
+        flex: 1;
+        padding: 8px 4px;
+        font-size: 11px;
+    }
+
+    .level-select-content,
+    .category-levels-content {
+        padding: 15px;
+    }
+
+    .level-select-content h1,
+    .category-levels-content h1 {
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+
+    .profile-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+        top: 10px;
+        right: 10px;
+    }
+
+    .profile-menu {
+        top: 60px;
+        right: 10px;
+        min-width: 130px;
+        padding: 10px;
+    }
+
+    .pixel-button {
+        font-size: 12px;
+        padding: 10px 16px;
+    }
+
+    .primary-btn {
+        padding: 12px;
+    }
+
+    .modal-content {
+        padding: 20px;
+        max-width: 90vw;
+    }
+
+    .modal-content h2 {
+        font-size: 18px;
+    }
+
+    .instructions-text {
+        font-size: 13px;
+    }
+
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 13px;
+    }
+
+    .intro-title {
+        font-size: 28px;
+        margin-bottom: 15px;
+        letter-spacing: 1px;
+    }
+
+    .intro-buttons {
+        width: 95%;
+        gap: 10px;
+    }
+
+    .auth-card {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .auth-card h1 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .text-input {
+        padding: 9px;
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+
+    .level-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .level-tile {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .star {
+        width: 16px;
+        height: 16px;
+        font-size: 13px;
+    }
+
+    .game-container {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .game-header {
+        padding: 8px 12px;
+        font-size: 12px;
+        gap: 8px;
+    }
+
+    .game-area {
+        padding: 6px;
+    }
+
+    .game-controls {
+        padding: 8px;
+        gap: 8px;
+        flex-direction: column;
+    }
+
+    .dpad-container {
+        margin-bottom: 8px;
+    }
+
+    .dpad {
+        grid-template-columns: repeat(3, 40px);
+        grid-template-rows: repeat(3, 40px);
+        gap: 4px;
+    }
+
+    .dpad-btn {
+        font-size: 12px;
+    }
+
+    .side-buttons {
+        flex-direction: row;
+        gap: 4px;
+    }
+
+    .side-buttons .pixel-button {
+        padding: 6px 2px;
+        font-size: 10px;
+    }
+
+    .level-select-content,
+    .category-levels-content {
+        padding: 12px;
+    }
+
+    .level-select-content h1,
+    .category-levels-content h1 {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+
+    .category-grid {
+        gap: 10px;
+    }
+
+    .profile-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        top: 8px;
+        right: 8px;
+    }
+
+    .profile-menu {
+        top: 50px;
+        right: 8px;
+        min-width: 120px;
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .pixel-button {
+        font-size: 11px;
+        padding: 8px 12px;
+    }
+
+    .primary-btn {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .signup-link-btn {
+        font-size: 11px;
+        padding: 8px;
+    }
+
+    .modal-content {
+        padding: 15px;
+        max-width: 95vw;
+        border-radius: 12px;
+    }
+
+    .modal-content h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .instructions-text {
+        font-size: 12px;
+        gap: 10px;
+    }
+
+    .instructions-text p {
+        line-height: 1.5;
+    }
+
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .theme-grid .pixel-button {
+        padding: 15px;
+        font-size: 12px;
+    }
+
+    .win-message {
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    .win-message h2 {
+        font-size: 22px;
+        margin-bottom: 15px;
+    }
+
+    .win-message .star {
+        width: 30px;
+        height: 30px;
+        font-size: 24px;
+    }
+}
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Auth Screen -->
+        <div id="authScreen" class="screen auth-screen active">
+            <div class="auth-card">
+                <h1>WELCOME</h1>
+                <input type="text" id="authUsername" class="text-input" placeholder="Username" />
+                <input type="password" id="authPassword" class="text-input" placeholder="Password" />
+                <div id="authMsg" class="error-msg"></div>
+                <button id="loginBtn" class="pixel-button primary-btn">LOGIN</button>
+                <button id="signupToggle" class="signup-link-btn">Sign up</button>
+            </div>
+        </div>
+
+        <!-- Register Screen -->
+        <div id="registerScreen" class="screen register-screen">
+            <div class="auth-card">
+                <h1>CREATE ACCOUNT</h1>
+                <input type="text" id="regUsername" class="text-input" placeholder="Username" />
+                <input type="password" id="regPassword" class="text-input" placeholder="Password" />
+                <input type="password" id="regConfirmPassword" class="text-input" placeholder="Confirm Password" />
+                <button id="registerBtn" class="pixel-button primary-btn">REGISTER</button>
+                <button id="backToLoginBtn" class="signup-link-btn">Back to Login</button>
+            </div>
+        </div>
+
+        <!-- Intro Screen -->
+        <div id="introScreen" class="screen intro-screen">
+            <div class="intro-content">
+                <h1 class="intro-title">SOKOBAN ADVENTURE</h1>
+                <div class="intro-buttons">
+                    <button id="startGameBtn" class="pixel-button start-btn">START GAME</button>
+                    <button id="instructionsBtn" class="pixel-button instructions-btn">INSTRUCTIONS</button>
+                </div>
+            </div>
+            <div id="instructionsModal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>How to play</h2>
+                    <div class="instructions-text">
+                        <p><strong>1.</strong> Push every crate onto the white targets.</p>
+                        <p><strong>2.</strong> You can only push — not pull.</p>
+                        <p><strong>3.</strong> Red <strong>targets</strong> are where crates must be pushed.</p>
+                        <p><strong>4.</strong> Fewer moves earn more stars. Good luck!</p>
+                    </div>
+                    <button id="closeInstructionsBtn" class="pixel-button">GOT IT!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Select Screen -->
+        <div id="levelSelectScreen" class="screen level-select-screen">
+            <div class="level-select-content">
+                <h1>SELECT CATEGORY</h1>
+                <div id="categoryGrid" class="category-grid"></div>
+                <button id="backFromLevelSelectBtn" class="pixel-button back-btn">BACK TO MENU</button>
+            </div>
+        </div>
+
+        <!-- Category Levels Screen -->
+        <div id="categoryLevelsScreen" class="screen category-levels-screen">
+            <div class="category-levels-content">
+                <h1 id="categoryTitle">LEVELS</h1>
+                <div id="levelGrid" class="level-grid"></div>
+                <button id="backFromCategoryBtn" class="pixel-button back-btn">BACK</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen game-screen">
+            <div class="game-container">
+                <div class="game-header">
+                    <div class="level-info">Level: <span id="levelNumber">1</span></div>
+                    <div class="timer-info">Time: <span id="timerDisplay">0.0</span>s</div>
+                </div>
+                <div class="game-area">
+                    <canvas id="gameCanvas"></canvas>
+                </div>
+                <div class="game-controls">
+                    <div class="dpad-container">
+                        <div class="dpad">
+                            <button class="dpad-btn up-btn" id="upBtn">↑</button>
+                            <button class="dpad-btn left-btn" id="leftBtn">←</button>
+                            <button class="dpad-btn center-btn" id="undoBtn">UNDO</button>
+                            <button class="dpad-btn right-btn" id="rightBtn">→</button>
+                            <button class="dpad-btn down-btn" id="downBtn">↓</button>
+                        </div>
+                    </div>
+                    <div class="side-buttons">
+                        <button id="levelsBtn" class="pixel-button">LEVELS</button>
+                        <button id="restartBtn" class="pixel-button">RESTART</button>
+                        <button id="nextBtn" class="pixel-button" disabled>NEXT LEVEL</button>
+                    </div>
+                </div>
+                <div id="winMessage" class="win-message hidden">
+                    <h2>Level Complete!</h2>
+                    <div class="stars" id="starDisplay"></div>
+                </div>
+            </div>
+
+            <!-- Profile Menu -->
+            <div id="profileMenu" class="profile-menu hidden">
+                <button id="themeBtn" class="pixel-button theme-btn">THEME</button>
+                <button id="logoutBtn" class="pixel-button logout-btn">LOGOUT</button>
+            </div>
+            <button id="profileBtn" class="profile-btn">☰</button>
+        </div>
+
+        <!-- Theme Picker Modal -->
+        <div id="themeModal" class="modal hidden">
+            <div class="modal-content theme-picker">
+                <h2>Environment Select</h2>
+                <div id="themeGrid" class="theme-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// Sokoban Game - Web Version
+// All 51 levels converted from Python
+
+const LEVELS = [
+    "####\n#  ###\n#    #\n# $  #\n###  ##\n# $ $ #\n#..@..#\n#  $  #\n###  ##\n  ####",
+    "#####\n#  @####\n#  $.  #\n###$.# #\n#  $.# #\n#  $.  #\n#    ###\n######",
+    "   #####\n   #   #\n#### # #\n# . .# #\n#  .   #\n# . # $##\n##  #$$ #\n ##   $@#\n  ##   ###\n   ####",
+    "#### ####\n#  ###  #\n#  # $$ #\n# $$ #  #\n#    #  ##\n### $.#  #\n  #..*.@.#\n  ##   ###\n   #####",
+    "###### ####\n#    ###  #\n# *     * #\n## #***#  #\n #  *+*  ##\n## #*$*# ##\n#  # # #  #\n#         #\n#  ########\n####",
+    "  ########\n ##  . . #\n # *$# # #\n #.  #$# ##\n##* #  #  #\n#   # *   #\n# $#@ .#  #\n#     $ ###\n##  #   #\n ########",
+    "   ####\n   #  #\n   #$ #\n   #  # ####\n#### ####  #\n#   .. ..  #\n#  $*. *.$@##\n#   #$ $#$  #\n#####   #   #\n    #########",
+    "  ####\n  #  #\n  # # \n  #  # ####\n#### $$$ #\n# @. $.$ #\n# . $ $* #\n# ..#$$ ##\n# # $ . #\n#   #   #\n#########",
+    "  #####\n  #   #\n#### ##\n# . ..\n#  $.#\n# .# #\n##  .#\n # . #\n##@$ #\n #    #\n  ####",
+    "    ####\n   ##  #\n#### #####\n#  . . . #\n# $ $ $$ #\n# .# #.# #\n# $.$ $. #\n##  @  * #\n # .#.# #\n  #     #\n  ########",
+    " #######\n ## . ##\n #  .  #\n # .$. #\n# $.$ #\n# .$$. #\n# $@$ #\n##   ##\n #####",
+    "  ####\n  #  #\n#### #\n# ..*##\n#  .@#\n# .  #\n#    #\n###  #\n   ##",
+    " ######\n ##  .#\n #   $##\n #  . $#\n # $ . #\n# $.$ #\n# $ . #\n#  $ ##\n#  . #\n#   ##\n#  @#\n######",
+    "  #####\n  #   #\n ### ##\n#  .  #\n#  $.#\n# $ ##\n#  $ #\n#  . #\n## @ ##\n  #  #\n ####",
+    " ######\n##  @ #\n#   $ ##\n# $ .$ #\n# . $.#\n# $ . #\n#  * #\n## ##\n  #",
+    "#######\n#     #\n# $.$ #\n# $*$ #\n# $ . #\n#  .  #\n# . # #\n#@ .  #\n#######",
+    "  #####\n  #   #\n### # #\n#  $@#\n#  * #\n# $. #\n# .  #\n#    #\n######",
+    "  #####\n  #   #\n###$ ##\n#  $ #\n# $ ##\n#  @ #\n#  .#\n#  * #\n# . #\n  ###",
+    " ######\n ##   #\n #   #\n # $ ##\n# $.##\n#  . #\n# @ ##\n#   #\n#####",
+    "  #####\n  #   #\n####  #\n#    *#\n# $@ ##\n#  .  #\n###   #\n   ###",
+    " #####\n ##@$#\n #.* #\n # . #\n ##  #\n#  ###\n# .  #\n#    #\n######",
+    "  ####\n  #  #\n###  #\n# $@$#\n# . ##\n# .  #\n# . ##\n# $ #\n# * ##\n##  #\n #  #\n ####",
+    "  #####\n ##   #\n # $ ##\n# @$ #\n# .$ #\n# *.  #\n# $ * #\n##    #\n  #  #\n ###",
+    " ######\n ##   #\n # $  #\n # $.#\n #  $#\n# @ ##\n# . *#\n# .  #\n#  ###\n  ###",
+    "#####\n# * #\n# $@#\n# .##\n# . #\n# . #\n# $ #\n###  #\n  ###",
+    "           #####        ########\n           #     #        #  ##  #\n#### ### #    #####$    $##\n#  #     ###  #      ## $ #\n#     #    #  # $ $$$##   #\n#     #    #####$  #  ### #\n### ##### ##   #  $# $    #\n#   #  #       #$  #  #####\n#      #   #  ##  ## #  #\n#   #  ####   ## # $ $  #\n##### ##      ## #   #  #\n   #       ####  ##### ######\n   #   #      #    # $$$ #  ##\n   #   #      ## $        $  #\n   ######## ############## # #\n        # @..................#\n        # # ##################\n        #   #\n        #####",
+    "  #####          ####\n  #   ############..#\n  #  $# $ $ $ $  $  #\n  ## $  # # # #$  ..#\n   #  # . . . *..   #\n ### $####@## # ## ##\n## ## # ## ####$ ###\n#   ..* . . . #  #\n#..  $# # # #  $ ##\n#  $  $ $ $ $ #$  #\n#..############   #\n####          #####",
+    "     #####\n     #   #\n    ## # #####\n   ## *  #   #\n  ### # ## # #####\n###   $$# *  #   #\n#  *#.  $ # ## # #\n# #  *... $$# *  #\n#   #$$ ....$ # #####\n##### # $.+.. $$#   #\n   #  * #$$ ...*  # #\n   # # ## # $  .#*  #\n   #   #  * #$$   ###\n   ##### # ## # ###\n       #   #  * ##\n       ##### # ##\n           #   #\n           #####",
+    "        ####\n        #  #\n        #  #\n        #  #\n########## #\n#    $ $ $$#\n# @  $..*. #\n#   # *...$#\n#####$...* #####\n    # .*..$#   #\n    #$$ $ $    #\n    # ##########\n    #  #\n    #  #\n    #  #\n    ####",
+    "          ####\n          #  #\n          #  #\n          #  #\n############ #\n#    $ $.* $$#\n# @  $..*.*. #\n#   # *  $ .$#\n#####*.$   *.#\n    #.*   $.*#\n    #$. $  * #####\n    # .*.*..$#   #\n    #$$ *.$ $    #\n    #  ############\n    #  #\n    #  #\n    #  #\n    ####",
+    " #########\n #   #   #\n## # # # ##\n# *.*$*.* #\n#    #    #\n### $@$ ###\n#    #    #\n# *.*$*.* #\n## # # # ##\n #   #   #\n #########",
+    "           #\n # ######## #\n  #        #\n # *$.$.$* #\n #  *###*  #\n # $#   #$ #\n #.. .@. ..#\n # $#   #$ #\n #  *###*  #\n # *$.$.$* #\n #        #\n# ######## #\n #",
+    " #### # ####\n##  #   #  ##\n#   #####   #\n#  $. * .$  #\n###.$.$.$.###\n  # .$ $. #\n# #*$ @ $*# #\n  # .$ $. #\n###.$.$.$.###\n#  $. * .$  #\n#   #####   #\n##  #   #  ##\n #### # ####",
+    " ###########\n##    #    ##\n# .$$. .$$. #\n# $..$ $..$ #\n# .$$...$$. #\n# $..$ $..$ #\n## $$.*.$$ ##\n# $..$ $..$ #\n# .$$...$$. #\n# $..$ $..$ #\n# .$$.@.$$. #\n##    #    ##\n ###########",
+    "#############\n#     #     #\n# # #   # # #\n#  .$.$.$.  #\n# #$.$.$.$# #\n#  .$.$.$.  #\n# #$.$@$.$# #\n#  .$.$.$.  #\n# #$.$.$.$# #\n#  .$.$.$.  #\n# # # # # # #\n#     #     #\n#############",
+    "  ############\n #      @     #\n# #  $ ## $  # #\n#  #.##  ##.#  #\n#  .   ##   .  #\n# $# #*##*# #$ #\n#  # *    * #  #\n# # ## *  ## # #\n# # ##  * ## # #\n#  # *    * #  #\n# $# #*##*# #$ #\n#  .   ##   .  #\n#  #.##  ##.#  #\n# #  $ ## $  # #\n #            #\n  ############",
+    "    ##########\n #####   @ *#####\n ##  $$ ##. .  ##\n # #    ##    # #\n##  # ##  ## #  ##\n##.     ##     $##\n#*  # #*##*# # $ #\n# . # *    * #   #\n# ## ## *  ## ## #\n# ## ##  * ## ## #\n#   # *    * # . #\n# $ # #*##*# #  *#\n##$     ##     .##\n##  # ##  ## #  ##\n # #    ##    # #\n ##  . .## $$  ##\n #####*     #####\n    ##########",
+    "    #########\n    #       #\n  ###$#$ $#$###\n  # . . . . . #\n###$#$#$ $#$#$###\n# . . . . . . . #\n# #$#$#$#$#$#$# #\n# . . .   . . . #\n###$#$##@##$#$###\n# . . .   . . . #\n# #$#$#$#$#$#$# #\n# . . . . . . . #\n###$#$#$ $#$#$###\n  # . . . . . #\n  ###$#$ $#$###\n    #       #\n    #########",
+    "  ###### ######\n #     ###     #\n# .$.$. # .$.$. #\n# $.$.$ # $.$.$ #\n# .$.$ ### $.$. #\n# $.$.#    .$.$ #\n# .$  #$ $## $. #\n##  # $...$ #  ##\n ####  .@.  ####\n##  # $...$ #  ##\n# .$ ##$ $#  $. #\n# $.$.    #.$.$ #\n# .$.$ ### $.$.$ #\n# $.$.$ # $.$.$ #\n# .$.$. # .$.$. #\n #     ###     #\n  ###### ######",
+    "   #####\n  #    ##  ######\n #  ##  # ##     #\n # #  # # #  ###  #\n # #  # ### #   # #\n # #  $  #  $   # #\n #  #$#*.#.*#$##  #\n ##   *.$ $.*    ##\n  ### .$ . $. ####\n    ### .#. ###\n #### .$ . $. ###\n##    *.$@$.*   ##\n#  ##$#*.#.*#$#  #\n# #   $  #  $  # #\n# #   # ### #  # #\n#  ###  # # #  # #\n #     ## #  ##  #\n  ######  ##    #\n           #####",
+    "    #####   #####\n    #   #   #   #\n  ###   #####   ###\n  # .$.$. #  $.$  #\n### $.$.$ #.$.$.$.###\n#  $.$.$.$ $.$.$.$  #\n#  .$.$.$. .$.$.$.  #\n#  $.$.$.$ $.$.$.$  #\n### $.$.$ #.$.$.$.###\n  # .$.$. .  $.$  #\n  ###   #.@.#   ###\n  #  $.$  . .$.$. #\n###.$.$.$.# $.$.$ ###\n#  $.$.$.$ $.$.$.$  #\n#  .$.$.$. .$.$.$.  #\n#  $.$.$.$ $.$.$.$  #\n###.$.$.$.# $.$.$ ###\n  #  $.$  # .$.$. #\n  ###   #####   ###\n    #   #   #   #\n    #####   #####",
+    "         #####\n        ##   ##\n       ##.$.$.##\n       ##$.$.$##\n       # .$.$. #\n       # $.$.$ #\n       # .$.$. #\n  ###### $.$.$ ######\n ###     .$.$.     ###\n##.$.$.$.$.$.$.$.$.$.##\n# $.$.$.$.$ $.$.$.$.$ #\n# .$.$.$.$@ $.$.$.$.$ #\n# $.$.$.$.$ $.$.$.$.$ #\n##.$.$.$.$.$.$.$.$.$.##\n ###     .$.$.     ###\n  ###### $.$.$ ######\n       # .$.$. #\n       # $.$.$ #\n       # .$.$. #\n       ##$.$.$##\n       ##.$.$.##\n        ##   ##\n         #####",
+    "           #\n          # #\n        ##   ##\n        #  $  #\n       #  $ $  #\n     ## .$.$.$. ##\n     # .$.$.$.$. #\n    # .$.$.$.$.$. #\n  ## .$.$.$.$.$.$. ##\n  #  $.$.$.$.$.$.$  #\n #  $.$.$.   .$.$.$  #\n#  $ $.$.  @  .$.$ $  #\n #  $.$.$.   .$.$.$  #\n  #  $.$.$. .$.$.$  #\n  ## .$.$.$.$.$.$. ##\n    # .$.$.$.$.$. #\n     # .$.$.$.$.$. #\n     ## .$.$.$. ##\n       #  $ $  #\n        #  $  #\n        ##   ##\n          # #\n           #",
+    "     ####\n     #  ########\n     #  .      #\n     #  ### $$ #\n     # $#  # .$#\n #####  # . .#.######\n #  $.  #  # .    $ #\n # $.#.###$###  $   #\n # $ . #.   .#####.##\n #  # ## *$$ #   # #\n # # . $ $@$ $ . # #\n # #   # $$* ## #  #\n##.#####.   .# . $ #\n#   $  ###$###.#.$ #\n# $    . #  #  .$  #\n######.#. . #  #####\n     #$. #  #$ #\n     # $$ ###  #\n     #      .  #\n     ########  #\n            ####",
+    "     #####\n     #   #####\n     # # #   #####\n     #     # #   #\n  #####$#      #$#\n  # $  $ ####$   #####\n  # # #     # ## #   #\n  #   ##### # # $$ # #\n ### $      #@#  #   #\n #   ####.... # #  ###\n # # #   .... # #   #\n #   # # ....   # # #\n###  # # ....####   #\n#   #  # #      $ ###\n# # $$ # # #####   #\n#   # ## #     # # #\n#####   $#### $  $ #\n    #$#      #$#####\n    #   # #     #\n    #####   # # #\n        #####   #\n            #####",
+    "################   #######\n#              #   #     #\n#  $ $ $ $ ### ##### ### ##\n# $ $ $ $ $  . #    $  . ##\n#  $ $ ### #.#.# ### #.#.###\n# $ $ $  . # .  $  . # .   #\n## ### #.#.# ### #.#.# ### ##\n #   . # .  $    # .  $ $.$##\n ###.#.# ### # @ # ### #.#.###\n  ##$.$ $  . #    $  . # .   #\n  ## ### #.#.# ### #.#.# ### ##\n   #   . # .  $  . # .  $ $ $ #\n   ###.#.# ### #.#.# ### $ $  #\n    ## .  $    # .  $ $ $ $ $ #\n    ## ### ##### ### $ $ $ $  #\n     #     #   #              #\n     #######   ################",
+    " ##########################  #\n##                        ##\n# *.*.* *.*.* *.*.* *.*.* ###\n# .$ $.$.$ $.$.$ $.$.$ $. .###\n# * $ * * $ * * $ * * $ *#   #\n# .$ $.*.$ $.*.$ $.*.$ $.*.* #\n# *.*.$ $.*.$ $.*.$ $.*.$ $. #\n#  $ * $ * * $ * * $ * * $ * #\n# *.*.$ $.*.$ $.*.$ $.*.$ $. #\n# .$ $.*.$ $.*.$ $.*+$ $.*.$ $.*.* #\n# * $ * * $ * * $ * * $ * $  #\n# .$ $.*.$ $.*.$ $.*.$ $.*.* #\n# *.*.$ $.*.$ $.*.$ $.*.$ $. #\n#   #* $ * * $ * * $ * * $ * #\n###. .$ $.$.$ $.$.$ $.$.$ $. #\n ###*.*.* *.*.* *.*.* *.*.* #\n  ##                        ##\n#  ##########################",
+    "  ####################\n  #      #    #      #\n###$.$  $.$  $.$  $.$###\n# $. .$$.#.$$. .$$.#.$ #\n# .###.. # ..###.. # . #\n# $. .$$.#.$$. .$$.#.$ #\n#  $.$  $.$  $.$  $.$  #\n#  $.$  $.$  $.$  $.$  #\n# $.#.$$. .$$.#.$$. .$ #\n##. # ..###.. # ..###.##\n# $.#.$$. .$$.#.$$. .$ #\n#  $.$  $.$  $.$  $.$  #\n#  $.$  $.$  $.$  $.$  #\n# $. .$$.#.$$. .$$.#.$ #\n##.###.. # ..###.. # .##\n# $. .$$.#.$$. .$$.#.$ #\n#  $.$  $.$  $.$  $.$  #\n#  $.$  $.$  $.$  $.$  #\n# $.#.$$. .$$.#.$$. .$ #\n# . # ..###.. # ..###. #\n# $.#.$$. .$$.#.$$. .$ #\n###$.$  $.$  $.$  $.$###\n  #      #    #     @#\n  ####################",
+    " #########################\n##   #       #       #   ##\n# #  .$.$.$.$ $.$.$.$.  # #\n#   .$.$.$.$.$.$.$.$.$.   #\n#  .$.$.$.$.$.$.$.$.$.$.  #\n##.$.$.$.$.$.$.$.$.$.$.$.##\n# $.$.$.$.$.$.$.$.$.$.$.$ #\n# .$.$.$.$.$.$.$.$.$.$.$. #\n# $.$.$.$.$.$.$.$.$.$.$.$ #\n# .$.$.$.$.$.$.$.$.$.$.$. #\n# $.$.$.$.$.$.$.$.$.$.$.$ #\n# .$.$.$.$.     .$.$.$.$. #\n# $.$.$.$.$  $  $.$.$.$.$ #\n##$.$.$.$.$@$ .$.$.$.$.$ ##\n# $.$.$.$.$  $  $.$.$.$.$ #\n# .$.$.$.$.     .$.$.$.$. #\n# $.$.$.$.$.$.$.$.$.$.$.$ #\n# .$.$.$.$.$.$.$.$.$.$.$. #\n# $.$.$.$.$.$.$.$.$.$.$.$ #\n# .$.$.$.$.$.$.$.$.$.$.$. #\n# $.$.$.$.$.$.$.$.$.$.$.$ #\n# .$.$.$.$.$.$.$.$.$.$.$. #\n##.$.$.$.$.$.$.$.$.$.$.$.##\n#  .$.$.$.$.$.$.$.$.$.$.  #\n#   .$.$.$.$.$.$.$.$.$.   #\n# #  .$.$.$.$ $.$.$.$.  # #\n##   #       #       #   ##\n #########################",
+    "#######\n#.@ # #\n#$* $ #\n#   $ #\n# ..  #\n#  *  #\n#######",
+    "#####\n#@$.#\n#####",
+];
+
+const LEVEL_CATEGORIES = {
+    "Easy": Array.from({ length: 10 }, (_, i) => i),
+    "Medium": Array.from({ length: 15 }, (_, i) => i + 10),
+    "Hard": Array.from({ length: 15 }, (_, i) => i + 25),
+    "Expert": Array.from({ length: 12 }, (_, i) => i + 40),
+};
+
+const THEMES = {
+    "Classic": { wall: "#8d8d94", floor: "#595962", box: "#b3804d", bg: "#191924" },
+    "Forest": { wall: "#408025", floor: "#4d8040", box: "#804d33", bg: "#0d1f0d" },
+    "Space": { wall: "#4d4db3", floor: "#262652", box: "#ccccff", bg: "#050814" },
+    "Sunset": { wall: "#994d4d", floor: "#cc8040", box: "#e6993d", bg: "#331414" },
+};
+
+class SokobanGame {
+    constructor() {
+        this.currentTheme = "Classic";
+        this.currentUsername = null;
+        this.currentLevel = 0;
+        this.level = null;
+        this.player = [0, 0];
+        this.boxes = [];
+        this.targets = [];
+        this.movesCount = 0;
+        this.startTime = null;
+        this.elapsedTime = 0;
+        this.history = [];
+        this.canvas = document.getElementById("gameCanvas");
+        this.ctx = this.canvas ? this.canvas.getContext("2d") : null;
+        this.soundMove = new Audio();
+        this.soundPush = new Audio();
+        this.soundWin = new Audio();
+        this.gameActive = false;
+
+        this.setupEventListeners();
+        this.loadUsers();
+        this.initSounds();
+    }
+
+    setupEventListeners() {
+        // Auth
+        document.getElementById("loginBtn").addEventListener("click", () => this.doLogin());
+        document.getElementById("signupToggle").addEventListener("click", () => this.showScreen("registerScreen"));
+        document.getElementById("registerBtn").addEventListener("click", () => this.doSignup());
+        document.getElementById("backToLoginBtn").addEventListener("click", () => this.showScreen("authScreen"));
+
+        // Intro
+        document.getElementById("startGameBtn").addEventListener("click", () => this.showScreen("levelSelectScreen"));
+        document.getElementById("instructionsBtn").addEventListener("click", () => {
+            document.getElementById("instructionsModal").classList.remove("hidden");
+        });
+        document.getElementById("closeInstructionsBtn").addEventListener("click", () => {
+            document.getElementById("instructionsModal").classList.add("hidden");
+        });
+
+        // Level Select
+        this.showLevelCategories();
+        document.getElementById("backFromLevelSelectBtn").addEventListener("click", () => this.showScreen("introScreen"));
+
+        // Game
+        document.getElementById("upBtn").addEventListener("click", () => this.move(0, -1));
+        document.getElementById("downBtn").addEventListener("click", () => this.move(0, 1));
+        document.getElementById("leftBtn").addEventListener("click", () => this.move(-1, 0));
+        document.getElementById("rightBtn").addEventListener("click", () => this.move(1, 0));
+        document.getElementById("undoBtn").addEventListener("click", () => this.undo());
+        document.getElementById("levelsBtn").addEventListener("click", () => this.showScreen("levelSelectScreen"));
+        document.getElementById("restartBtn").addEventListener("click", () => this.loadLevel(this.currentLevel));
+        document.getElementById("nextBtn").addEventListener("click", () => this.nextLevel());
+
+        // Profile
+        document.getElementById("profileBtn").addEventListener("click", () => this.toggleProfileMenu());
+        document.getElementById("themeBtn").addEventListener("click", () => this.showThemeModal());
+        document.getElementById("logoutBtn").addEventListener("click", () => this.doLogout());
+
+        // Theme Modal
+        this.updateThemeButtons();
+
+        // Keyboard controls
+        window.addEventListener("keydown", (e) => this.handleKeyDown(e));
+
+        // Canvas resize
+        window.addEventListener("resize", () => this.resizeCanvas());
+    }
+
+    initSounds() {
+        // Create simple beep sounds using Web Audio API
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    playSound(frequency, duration, volume = 0.25) {
+        try {
+            const ctx = this.audioContext;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = frequency;
+            gain.gain.setValueAtTime(volume, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + duration);
+        } catch (e) {
+            console.log("Audio not available");
+        }
+    }
+
+    playMoveSound() {
+        this.playSound(720, 0.08, 0.18);
+    }
+
+    playPushSound() {
+        this.playSound(300, 0.12, 0.26);
+    }
+
+    playWinSound() {
+        this.playSound(523, 0.45, 0.2);
+        setTimeout(() => this.playSound(659, 0.18, 0.2), 150);
+    }
+
+    handleKeyDown(e) {
+        const moves = {
+            "ArrowUp": [0, -1],
+            "ArrowDown": [0, 1],
+            "ArrowLeft": [-1, 0],
+            "ArrowRight": [1, 0],
+        };
+        if (moves[e.key]) {
+            e.preventDefault();
+            this.move(...moves[e.key]);
+        }
+    }
+
+    showScreen(screenId) {
+        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+        document.getElementById(screenId).classList.add("active");
+
+        if (screenId === "gameScreen") {
+            this.gameActive = true;
+            this.resizeCanvas();
+            setTimeout(() => this.draw(), 100);
+        } else {
+            this.gameActive = false;
+        }
+
+        if (screenId === "introScreen" || screenId === "gameScreen") {
+            document.getElementById("profileBtn").style.display = "block";
+        } else {
+            document.getElementById("profileBtn").style.display = "none";
+        }
+    }
+
+    loadUsers() {
+        this.users = JSON.parse(localStorage.getItem("sokobanUsers")) || {};
+    }
+
+    saveUsers() {
+        localStorage.setItem("sokobanUsers", JSON.stringify(this.users));
+    }
+
+    doLogin() {
+        const username = document.getElementById("authUsername").value.trim();
+        const password = document.getElementById("authPassword").value.trim();
+        const msg = document.getElementById("authMsg");
+
+        if (this.users[username] && this.users[username] === password) {
+            this.currentUsername = username;
+            document.getElementById("authUsername").value = "";
+            document.getElementById("authPassword").value = "";
+            msg.textContent = "";
+            this.showScreen("introScreen");
+        } else {
+            msg.textContent = "Invalid credentials";
+        }
+    }
+
+    doSignup() {
+        const username = document.getElementById("regUsername").value.trim();
+        const password = document.getElementById("regPassword").value.trim();
+        const confirmPassword = document.getElementById("regConfirmPassword").value.trim();
+
+        if (username.length < 3 || password !== confirmPassword) {
+            alert("Invalid input");
+            return;
+        }
+
+        if (this.users[username]) {
+            alert("User already exists");
+            return;
+        }
+
+        this.users[username] = password;
+        this.saveUsers();
+
+        document.getElementById("regUsername").value = "";
+        document.getElementById("regPassword").value = "";
+        document.getElementById("regConfirmPassword").value = "";
+
+        this.showScreen("authScreen");
+    }
+
+    doLogout() {
+        this.currentUsername = null;
+        this.toggleProfileMenu();
+        this.showScreen("authScreen");
+    }
+
+    showLevelCategories() {
+        const grid = document.getElementById("categoryGrid");
+        grid.innerHTML = "";
+        for (const category of Object.keys(LEVEL_CATEGORIES)) {
+            const btn = document.createElement("button");
+            btn.className = "pixel-button";
+            btn.textContent = category.toUpperCase();
+            btn.style.padding = "20px";
+            btn.style.fontSize = "16px";
+            btn.addEventListener("click", () => this.showCategoryLevels(category));
+            grid.appendChild(btn);
+        }
+    }
+
+    showCategoryLevels(category) {
+        document.getElementById("categoryTitle").textContent = `${category.toUpperCase()} LEVELS`;
+        const grid = document.getElementById("levelGrid");
+        grid.innerHTML = "";
+
+        const indices = LEVEL_CATEGORIES[category];
+        const progress = this.loadProgress();
+
+        for (const i of indices) {
+            if (i >= LEVELS.length) continue;
+
+            const isUnlocked = i === 0 || i === 3 || progress[i] || progress[i - 1];
+            const tile = document.createElement("button");
+            tile.className = "level-tile";
+            tile.disabled = !isUnlocked;
+
+            const stars = progress[i] || 0;
+            const starsDiv = document.createElement("div");
+            starsDiv.className = "stars";
+
+            if (isUnlocked) {
+                for (let s = 0; s < 3; s++) {
+                    const star = document.createElement("div");
+                    star.className = "star " + (s < stars ? "filled" : "empty");
+                    star.textContent = "★";
+                    starsDiv.appendChild(star);
+                }
+                tile.textContent = `Lvl ${i + 1}`;
+            } else {
+                tile.textContent = "LOCKED";
+            }
+
+            if (isUnlocked) {
+                tile.addEventListener("click", () => this.selectLevel(i));
+            }
+
+            tile.appendChild(starsDiv);
+            grid.appendChild(tile);
+        }
+
+        this.showScreen("categoryLevelsScreen");
+    }
+
+    selectLevel(index) {
+        this.currentLevel = index;
+        this.loadLevel(index);
+        this.showScreen("gameScreen");
+    }
+
+    loadLevel(levelIndex) {
+        const levelStr = LEVELS[levelIndex];
+        const lines = levelStr.split("\n");
+        const maxCols = Math.max(...lines.map(l => l.length));
+        this.level = lines.map(l => l.padEnd(maxCols, " "));
+
+        this.boxes = [];
+        this.targets = [];
+        this.player = [0, 0];
+
+        for (let r = 0; r < this.level.length; r++) {
+            for (let c = 0; c < this.level[r].length; c++) {
+                const char = this.level[r][c];
+                if (char === "$") this.boxes.push([r, c]);
+                else if (char === "*") {
+                    this.boxes.push([r, c]);
+                    this.targets.push([r, c]);
+                } else if (char === ".") this.targets.push([r, c]);
+                else if (char === "@") this.player = [r, c];
+                else if (char === "+") {
+                    this.targets.push([r, c]);
+                    this.player = [r, c];
+                }
+            }
+        }
+
+        this.history = [];
+        this.movesCount = 0;
+        this.startTime = null;
+        this.elapsedTime = 0;
+        this.updateUI();
+        this.draw();
+        document.getElementById("nextBtn").disabled = true;
+        document.getElementById("winMessage").classList.add("hidden");
+    }
+
+    move(dx, dy) {
+        if (!this.level || this.isLevelComplete()) return;
+        if (!this.startTime) this.startTime = Date.now();
+
+        const oldPlayer = [...this.player];
+        const oldBoxes = this.boxes.map(b => [...b]);
+
+        const [r, c] = this.player;
+        const [nr, nc] = [r + dy, c + dx];
+
+        if (nr < 0 || nr >= this.level.length || nc < 0 || nc >= this.level[nr].length) return;
+        if (this.level[nr][nc] === "#") return;
+
+        let boxPushed = false;
+        for (let b of this.boxes) {
+            if (b[0] === nr && b[1] === nc) {
+                const [nbr, nbc] = [nr + dy, nc + dx];
+                if (nbr < 0 || nbr >= this.level.length || nbc < 0 || nbc >= this.level[nbr].length) return;
+                if (this.level[nbr][nbc] === "#") return;
+                if (this.boxes.some(box => box[0] === nbr && box[1] === nbc)) return;
+                b[0] = nbr;
+                b[1] = nbc;
+                boxPushed = true;
+            }
+        }
+
+        if (boxPushed) {
+            this.playPushSound();
+        } else {
+            this.playMoveSound();
+        }
+
+        this.history.push({ player: oldPlayer, boxes: oldBoxes });
+        this.player = [nr, nc];
+        this.movesCount++;
+        this.updateUI();
+        this.draw();
+        this.checkWin();
+    }
+
+    undo() {
+        if (this.history.length === 0) return;
+        const state = this.history.pop();
+        this.player = state.player;
+        this.boxes = state.boxes;
+        this.movesCount--;
+        this.updateUI();
+        this.draw();
+    }
+
+    isLevelComplete() {
+        return this.boxes.every(b => this.targets.some(t => t[0] === b[0] && t[1] === b[1]));
+    }
+
+    checkWin() {
+        if (this.isLevelComplete()) {
+            this.playWinSound();
+            const stars = this.movesCount < 35 ? 3 : this.movesCount < 65 ? 2 : 1;
+            this.saveProgress(this.currentLevel, stars);
+            this.showWinMessage(stars);
+            document.getElementById("nextBtn").disabled = false;
+        }
+    }
+
+    saveProgress(levelIndex, stars) {
+        const progress = this.loadProgress();
+        progress[levelIndex] = Math.max(progress[levelIndex] || 0, stars);
+        localStorage.setItem(`sokoban_progress_${this.currentUsername}`, JSON.stringify(progress));
+    }
+
+    loadProgress() {
+        return JSON.parse(localStorage.getItem(`sokoban_progress_${this.currentUsername}`)) || {};
+    }
+
+    showWinMessage(stars) {
+        const msg = document.getElementById("winMessage");
+        const starDisplay = document.getElementById("starDisplay");
+        starDisplay.innerHTML = "";
+        for (let i = 0; i < 3; i++) {
+            const star = document.createElement("div");
+            star.className = "star " + (i < stars ? "filled" : "empty");
+            star.textContent = "★";
+            star.style.fontSize = "40px";
+            starDisplay.appendChild(star);
+        }
+        msg.classList.remove("hidden");
+        setTimeout(() => msg.classList.add("hidden"), 3000);
+    }
+
+    nextLevel() {
+        if (this.currentLevel < LEVELS.length - 1) {
+            this.selectLevel(this.currentLevel + 1);
+        }
+    }
+
+    updateUI() {
+        document.getElementById("levelNumber").textContent = this.currentLevel + 1;
+        this.elapsedTime = this.startTime ? (Date.now() - this.startTime) / 1000 : 0;
+        document.getElementById("timerDisplay").textContent = this.elapsedTime.toFixed(1);
+    }
+
+    resizeCanvas() {
+        if (!this.canvas) return;
+        const container = this.canvas.parentElement;
+        this.canvas.width = container.clientWidth - 20;
+        this.canvas.height = container.clientHeight - 20;
+        this.draw();
+    }
+
+    draw() {
+        if (!this.level || !this.ctx) return;
+
+        const canvas = this.canvas;
+        const rows = this.level.length;
+        const cols = Math.max(...this.level.map(l => l.length));
+        const tileSize = Math.min(canvas.width / cols, canvas.height / rows) * 0.95;
+        const gridW = cols * tileSize;
+        const gridH = rows * tileSize;
+        const offX = (canvas.width - gridW) / 2;
+        const offY = (canvas.height - gridH) / 2;
+
+        const theme = THEMES[this.currentTheme];
+
+        // Background
+        this.ctx.fillStyle = theme.bg;
+        this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Tiles
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const char = this.level[r][c];
+                const x = offX + c * tileSize;
+                const y = offY + r * tileSize;
+
+                // Floor
+                this.ctx.fillStyle = theme.floor;
+                this.ctx.fillRect(x, y, tileSize, tileSize);
+                this.ctx.strokeStyle = "rgba(0,0,0,0.2)";
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(x, y, tileSize, tileSize);
+
+                if (char === "#") {
+                    // Wall
+                    this.ctx.fillStyle = theme.wall;
+                    this.ctx.fillRect(x, y, tileSize - 1, tileSize - 1);
+                    this.ctx.strokeStyle = "rgba(255,255,255,0.15)";
+                    this.ctx.lineWidth = 1.5;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y);
+                    this.ctx.lineTo(x, y + tileSize);
+                    this.ctx.lineTo(x + tileSize, y + tileSize);
+                    this.ctx.stroke();
+
+                    this.ctx.strokeStyle = "rgba(0,0,0,0.3)";
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y);
+                    this.ctx.lineTo(x + tileSize, y);
+                    this.ctx.lineTo(x + tileSize, y + tileSize);
+                    this.ctx.stroke();
+                }
+            }
+        }
+
+        // Targets
+        for (const t of this.targets) {
+            const x = offX + t[1] * tileSize;
+            const y = offY + t[0] * tileSize;
+            this.ctx.fillStyle = "rgba(0,0,0,0.25)";
+            this.ctx.beginPath();
+            this.ctx.arc(x + tileSize / 2, y + tileSize / 2, tileSize * 0.4, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.strokeStyle = "rgba(255,255,255,0.2)";
+            this.ctx.lineWidth = 1.5;
+            this.ctx.stroke();
+        }
+
+        // Boxes
+        for (const b of this.boxes) {
+            const x = offX + b[1] * tileSize;
+            const y = offY + b[0] * tileSize;
+            this.ctx.fillStyle = theme.box;
+            this.ctx.fillRect(x + 4, y + 4, tileSize - 8, tileSize - 8);
+            this.ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            this.ctx.lineWidth = 1.8;
+            this.ctx.strokeRect(x + 6, y + 6, tileSize - 12, tileSize - 12);
+            this.ctx.beginPath();
+            this.ctx.moveTo(x + 6, y + 6);
+            this.ctx.lineTo(x + tileSize - 6, y + tileSize - 6);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(x + 6, y + tileSize - 6);
+            this.ctx.lineTo(x + tileSize - 6, y + 6);
+            this.ctx.stroke();
+        }
+
+        // Player
+        const px = offX + this.player[1] * tileSize;
+        const py = offY + this.player[0] * tileSize;
+        this.ctx.fillStyle = "rgba(0,0,0,0.3)";
+        this.ctx.fillRect(px + tileSize * 0.2, py + 2, tileSize * 0.6, tileSize * 0.3);
+        this.ctx.fillStyle = "#3366e6";
+        this.ctx.fillRect(px + tileSize * 0.2, py + tileSize * 0.1, tileSize * 0.6, tileSize * 0.5);
+        this.ctx.fillStyle = "#e6b399";
+        this.ctx.fillRect(px + tileSize * 0.3, py + tileSize * 0.45, tileSize * 0.4, tileSize * 0.4);
+    }
+
+    toggleProfileMenu() {
+        const menu = document.getElementById("profileMenu");
+        menu.classList.toggle("hidden");
+    }
+
+    showThemeModal() {
+        this.toggleProfileMenu();
+        document.getElementById("themeModal").classList.remove("hidden");
+    }
+
+    updateThemeButtons() {
+        const grid = document.getElementById("themeGrid");
+        grid.innerHTML = "";
+        for (const [name, colors] of Object.entries(THEMES)) {
+            const btn = document.createElement("button");
+            btn.className = "pixel-button";
+            btn.textContent = name.toUpperCase();
+            btn.style.background = colors.wall;
+            btn.addEventListener("click", () => {
+                this.currentTheme = name;
+                document.getElementById("themeModal").classList.add("hidden");
+                this.draw();
+            });
+            grid.appendChild(btn);
+        }
+    }
+}
+
+// Initialize game on page load
+window.addEventListener("DOMContentLoaded", () => {
+    const game = new SokobanGame();
+    game.showScreen("authScreen");
+});
+    </script>
+</body>
+</html>
