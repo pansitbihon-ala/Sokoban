@@ -237,7 +237,7 @@ body {
     grid-template-columns: repeat(2, 1fr);
     max-width: 700px;
     margin: 0 auto;
-    width: 100%;
+    width: calc(100% - 20px);
 }
 
 .category-grid .pixel-button {
@@ -256,6 +256,7 @@ body {
     justify-content: center;
     text-transform: uppercase;
     letter-spacing: 1px;
+    min-width: 0;
 }
 
 .category-grid .pixel-button:hover {
@@ -395,15 +396,16 @@ body {
     border: none;
     max-height: none;
     flex-wrap: nowrap;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
 }
 
 .dpad-container {
-    flex: 0;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    order: 1;
 }
 
 .dpad {
@@ -464,12 +466,13 @@ body {
 }
 
 .side-buttons {
-    flex: 0;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     gap: 12px;
     min-width: 140px;
     width: 140px;
+    order: 2;
 }
 
 .side-buttons .pixel-button {
@@ -677,6 +680,17 @@ body {
 }
 
 /* Responsive */
+@media (min-width: 1025px) {
+    .category-grid {
+        max-width: min(700px, calc(100% - 40px));
+        gap: 25px;
+    }
+
+    .category-grid .pixel-button {
+        padding: 20px;
+        font-size: 22px;
+    }
+}
 @media (max-width: 1024px) {
     .game-controls {
         gap: 15px;
@@ -701,6 +715,8 @@ body {
     .category-grid {
         gap: 15px;
         padding: 15px;
+        max-width: 600px;
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .category-grid .pixel-button {
@@ -742,6 +758,8 @@ body {
 
     .category-grid {
         grid-template-columns: 1fr;
+        max-width: 100%;
+        padding: 10px;
     }
 
     .game-container {
@@ -767,8 +785,9 @@ body {
 
     .game-controls {
         padding: 10px;
-        gap: 10px;
-        flex-direction: column;
+        gap: 15px;
+        flex-direction: row;
+        justify-content: space-between;
     }
 
     .dpad {
@@ -1478,7 +1497,7 @@ class SokobanGame {
         for (const i of indices) {
             if (i >= LEVELS.length) continue;
 
-            const isUnlocked = i === 0 || i === 3 || progress[i] || progress[i - 1];
+            const isUnlocked = i === 0 || progress[i] || progress[i - 1];
             const tile = document.createElement("button");
             tile.className = "level-tile";
             tile.disabled = !isUnlocked;
