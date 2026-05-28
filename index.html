@@ -227,6 +227,7 @@ body {
     margin-bottom: 30px;
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px;
 }
 
@@ -1778,5 +1779,16 @@ window.addEventListener("DOMContentLoaded", () => {
     game.showScreen("authScreen");
 });
     </script>
+
+    <!-- Sound Effects -->
+    <audio id="moveSound" preload="auto">
+        <source src="move.wav" type="audio/wav">
+    </audio>
+    <audio id="pushSound" preload="auto">
+        <source src="push.wav" type="audio/wav">
+    </audio>
+    <audio id="winSound" preload="auto">
+        <source src="win.wav" type="audio/wav">
+    </audio>
 </body>
 </html>
